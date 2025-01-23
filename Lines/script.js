@@ -27,13 +27,49 @@ function displayMatrix(matrix) {
     });
 }
 
-// Инициализация матрицы и отображение
-let matrix9x9 = createMatrix(9, 9);
-displayMatrix(matrix9x9);
-
 // Функция для проверки, что координаты находятся рядом
 function areAdjacent(row1, col1, row2, col2) {
     return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
+}
+
+// Функция для проверки и замены трёх одинаковых чисел в строках и столбцах
+function checkAndReplaceTriplets(matrix) {
+    const rows = matrix.length;
+    const cols = matrix[0].length;
+
+    // Список ячеек, которые нужно обнулить
+    const cellsToZero = [];
+
+    // Проверяем строки
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j <= cols - 3; j++) {
+            if (
+                matrix[i][j] !== 0 &&
+                matrix[i][j] === matrix[i][j + 1] &&
+                matrix[i][j] === matrix[i][j + 2]
+            ) {
+                cellsToZero.push([i, j], [i, j + 1], [i, j + 2]);
+            }
+        }
+    }
+
+    // Проверяем столбцы
+    for (let j = 0; j < cols; j++) {
+        for (let i = 0; i <= rows - 3; i++) {
+            if (
+                matrix[i][j] !== 0 &&
+                matrix[i][j] === matrix[i + 1][j] &&
+                matrix[i][j] === matrix[i + 2][j]
+            ) {
+                cellsToZero.push([i, j], [i + 1, j], [i + 2, j]);
+            }
+        }
+    }
+
+    // Заменяем указанные ячейки на 0
+    cellsToZero.forEach(([row, col]) => {
+        matrix[row][col] = 0;
+    });
 }
 
 // Функция для замены местами двух чисел в матрице
@@ -63,6 +99,13 @@ function swapValues() {
     matrix9x9[row1][col1] = matrix9x9[row2][col2];
     matrix9x9[row2][col2] = temp;
 
+    // Проверяем на тройки и заменяем на 0, если они есть
+    checkAndReplaceTriplets(matrix9x9);
+
     // Обновляем отображение матрицы
     displayMatrix(matrix9x9);
 }
+
+// Инициализация матрицы и отображение
+let matrix9x9 = createMatrix(9, 9);
+displayMatrix(matrix9x9);
