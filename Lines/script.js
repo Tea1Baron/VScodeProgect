@@ -1,3 +1,11 @@
+let score = 0;
+
+// Функция обновления счёта
+function updateScore(points) {
+    score += points;
+    document.getElementById('score').textContent = `Очки: ${score}`;
+}
+
 // Функция создания матрицы
 function createMatrix(rows, cols) {
     const matrix = [];
@@ -56,10 +64,46 @@ function areAdjacent(row1, col1, row2, col2) {
     );
 }
 
+// Функция опускания шаров и добавления новых
+function updateBoard(matrix) {
+    let hasChanges;
+    do {
+        hasChanges = false;
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        
+        // Опускаем шары вниз
+        for (let j = 0; j < cols; j++) {
+            for (let i = rows - 1; i > 0; i--) {
+                if (matrix[i][j] === 0) {
+                    for (let k = i - 1; k >= 0; k--) {
+                        if (matrix[k][j] !== 0) {
+                            matrix[i][j] = matrix[k][j];
+                            matrix[k][j] = 0;
+                            hasChanges = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Добавляем новые шары сверху
+        for (let j = 0; j < cols; j++) {
+            if (matrix[0][j] === 0) {
+                matrix[0][j] = Math.floor(Math.random() * 5) + 1;
+                hasChanges = true;
+            }
+        }
+    } while (hasChanges);
+    displayMatrix(matrix);
+}
+
 // Проверка и замена 3 и более одинаковых чисел в строках и столбцах
 function checkAndReplaceMatches(matrix) {
     const rows = matrix.length;
     const cols = matrix[0].length;
+    let removedBalls = 0;
 
     // Проверяем строки
     for (let i = 0; i < rows; i++) {
@@ -69,6 +113,7 @@ function checkAndReplaceMatches(matrix) {
                 count++;
                 if (count >= 3 && (j === cols - 1 || matrix[i][j] !== matrix[i][j + 1])) {
                     for (let k = 0; k < count; k++) {
+                        if (matrix[i][j - k] !== 0) removedBalls++;
                         matrix[i][j - k] = 0;
                     }
                 }
@@ -86,6 +131,7 @@ function checkAndReplaceMatches(matrix) {
                 count++;
                 if (count >= 3 && (i === rows - 1 || matrix[i][j] !== matrix[i + 1][j])) {
                     for (let k = 0; k < count; k++) {
+                        if (matrix[i - k][j] !== 0) removedBalls++;
                         matrix[i - k][j] = 0;
                     }
                 }
@@ -94,7 +140,8 @@ function checkAndReplaceMatches(matrix) {
             }
         }
     }
-    displayMatrix(matrix);
+    updateScore(removedBalls * 100);
+    updateBoard(matrix);
 }
 
 // Обработчик клика по ячейке
@@ -116,8 +163,6 @@ function onCellClick(event) {
             matrix9x9[selectedRow][selectedCol] = matrix9x9[row][col];
             matrix9x9[row][col] = temp;
             checkAndReplaceMatches(matrix9x9);
-        } else {
-            alert("Вы можете менять местами только соседние ячейки.");
         }
         selectedCell.style.backgroundColor = '';
         selectedCell = null;
@@ -126,4 +171,6 @@ function onCellClick(event) {
 
 // Инициализация матрицы и отображение
 let matrix9x9 = createMatrix(9, 9);
+document.body.insertAdjacentHTML('beforeend', '<h2 id="score">Очки: 0</h2>');
 displayMatrix(matrix9x9);
+checkAndReplaceMatches(matrix9x9);
