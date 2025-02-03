@@ -163,6 +163,8 @@ function onCellClick(event) {
             matrix9x9[selectedRow][selectedCol] = matrix9x9[row][col];
             matrix9x9[row][col] = temp;
             checkAndReplaceMatches(matrix9x9);
+        } else {
+            alert("Вы можете менять местами только соседние ячейки.");
         }
         selectedCell.style.backgroundColor = '';
         selectedCell = null;
