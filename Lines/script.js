@@ -1,4 +1,4 @@
-// Создание матрицы 9x9 с случайными числами от 1 до 5
+// Функция создания матрицы
 function createMatrix(rows, cols) {
     const matrix = [];
     for (let i = 0; i < rows; i++) {
@@ -12,98 +12,107 @@ function createMatrix(rows, cols) {
     return matrix;
 }
 
-// Функция для отображения матрицы в виде таблицы
+// Функция отображения матрицы
 function displayMatrix(matrix) {
     const table = document.getElementById('matrixTable');
     table.innerHTML = ''; // Очищаем таблицу
-    matrix.forEach(row => {
+    matrix.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        row.forEach(cell => {
+        row.forEach((cell, colIndex) => {
             const td = document.createElement('td');
             td.textContent = cell;
+            td.dataset.row = rowIndex;
+            td.dataset.col = colIndex;
+            td.addEventListener('click', onCellClick); // Добавляем обработчик клика
             tr.appendChild(td);
         });
         table.appendChild(tr);
     });
 }
 
-// Функция для проверки, что координаты находятся рядом
+// Проверка на соседство ячеек
 function areAdjacent(row1, col1, row2, col2) {
-    return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
+    return (
+        (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+        (Math.abs(col1 - col2) === 1 && row1 === row2)
+    );
 }
 
-// Функция для проверки и замены трёх одинаковых чисел в строках и столбцах
-function checkAndReplaceTriplets(matrix) {
+// Проверка и замена 4 и более одинаковых чисел в строках и столбцах
+function checkAndReplaceMatches(matrix) {
     const rows = matrix.length;
     const cols = matrix[0].length;
 
-    // Список ячеек, которые нужно обнулить
-    const cellsToZero = [];
-
     // Проверяем строки
     for (let i = 0; i < rows; i++) {
-        for (let j = 0; j <= cols - 3; j++) {
-            if (
-                matrix[i][j] !== 0 &&
-                matrix[i][j] === matrix[i][j + 1] &&
-                matrix[i][j] === matrix[i][j + 2]
-            ) {
-                cellsToZero.push([i, j], [i, j + 1], [i, j + 2]);
+        let count = 1;
+        for (let j = 1; j < cols; j++) {
+            if (matrix[i][j] === matrix[i][j - 1] && matrix[i][j] !== 0) {
+                count++;
+                if (count >= 3 && (j === cols - 1 || matrix[i][j] !== matrix[i][j + 1])) {
+                    for (let k = 0; k < count; k++) {
+                        matrix[i][j - k] = 0;
+                    }
+                }
+            } else {
+                count = 1;
             }
         }
     }
 
     // Проверяем столбцы
     for (let j = 0; j < cols; j++) {
-        for (let i = 0; i <= rows - 3; i++) {
-            if (
-                matrix[i][j] !== 0 &&
-                matrix[i][j] === matrix[i + 1][j] &&
-                matrix[i][j] === matrix[i + 2][j]
-            ) {
-                cellsToZero.push([i, j], [i + 1, j], [i + 2, j]);
+        let count = 1;
+        for (let i = 1; i < rows; i++) {
+            if (matrix[i][j] === matrix[i - 1][j] && matrix[i][j] !== 0) {
+                count++;
+                if (count >= 3 && (i === rows - 1 || matrix[i][j] !== matrix[i + 1][j])) {
+                    for (let k = 0; k < count; k++) {
+                        matrix[i - k][j] = 0;
+                    }
+                }
+            } else {
+                count = 1;
             }
         }
     }
 
-    // Заменяем указанные ячейки на 0
-    cellsToZero.forEach(([row, col]) => {
-        matrix[row][col] = 0;
-    });
+    // Обновляем отображение матрицы
+    displayMatrix(matrix);
 }
 
-// Функция для замены местами двух чисел в матрице
-function swapValues() {
-    const row1 = parseInt(document.getElementById('row1').value) - 1;
-    const col1 = parseInt(document.getElementById('col1').value) - 1;
-    const row2 = parseInt(document.getElementById('row2').value) - 1;
-    const col2 = parseInt(document.getElementById('col2').value) - 1;
+// Обработчик клика по ячейке
+let selectedCell = null;
+function onCellClick(event) {
+    const clickedCell = event.target;
+    const row = parseInt(clickedCell.dataset.row, 10);
+    const col = parseInt(clickedCell.dataset.col, 10);
 
-    // Проверка на корректность введённых данных
-    if (
-        row1 < 0 || row1 >= 9 || col1 < 0 || col1 >= 9 ||
-        row2 < 0 || row2 >= 9 || col2 < 0 || col2 >= 9
-    ) {
-        alert("Введите корректные позиции (от 1 до 9 для строк и столбцов).");
-        return;
+    if (!selectedCell) {
+        // Если ничего не выбрано, выбираем текущую ячейку
+        selectedCell = clickedCell;
+        selectedCell.style.backgroundColor = '#ddd'; // Выделяем ячейку
+    } else {
+        const selectedRow = parseInt(selectedCell.dataset.row, 10);
+        const selectedCol = parseInt(selectedCell.dataset.col, 10);
+
+        // Проверяем, что ячейки соседние
+        if (areAdjacent(selectedRow, selectedCol, row, col)) {
+            // Меняем значения местами
+            const temp = matrix9x9[selectedRow][selectedCol];
+            matrix9x9[selectedRow][selectedCol] = matrix9x9[row][col];
+            matrix9x9[row][col] = temp;
+
+            // Проверяем и заменяем совпадения
+            checkAndReplaceMatches(matrix9x9);
+        } else {
+            alert("Вы можете менять местами только соседние ячейки.");
+        }
+
+        // Убираем выделение
+        selectedCell.style.backgroundColor = '';
+        selectedCell = null;
     }
-
-    // Проверка на соседство ячеек
-    if (!areAdjacent(row1, col1, row2, col2)) {
-        alert("Вы можете менять местами только соседние ячейки (по горизонтали или вертикали).");
-        return;
-    }
-
-    // Меняем местами элементы в матрице
-    const temp = matrix9x9[row1][col1];
-    matrix9x9[row1][col1] = matrix9x9[row2][col2];
-    matrix9x9[row2][col2] = temp;
-
-    // Проверяем на тройки и заменяем на 0, если они есть
-    checkAndReplaceTriplets(matrix9x9);
-
-    // Обновляем отображение матрицы
-    displayMatrix(matrix9x9);
 }
 
 // Инициализация матрицы и отображение
