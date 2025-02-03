@@ -20,14 +20,32 @@ function displayMatrix(matrix) {
         const tr = document.createElement('tr');
         row.forEach((cell, colIndex) => {
             const td = document.createElement('td');
-            td.textContent = cell;
             td.dataset.row = rowIndex;
             td.dataset.col = colIndex;
+            if (cell !== 0) {
+                const circle = document.createElement('div');
+                circle.classList.add('circle');
+                circle.style.backgroundColor = getColor(cell);
+                td.appendChild(circle);
+            }
             td.addEventListener('click', onCellClick); // Добавляем обработчик клика
             tr.appendChild(td);
         });
         table.appendChild(tr);
     });
+}
+
+// Функция получения цвета
+function getColor(number) {
+    const colors = {
+        1: 'red',
+        2: 'green',
+        3: 'blue',
+        4: 'purple',
+        5: 'brown',
+        0: 'white'
+    };
+    return colors[number];
 }
 
 // Проверка на соседство ячеек
@@ -38,7 +56,7 @@ function areAdjacent(row1, col1, row2, col2) {
     );
 }
 
-// Проверка и замена 4 и более одинаковых чисел в строках и столбцах
+// Проверка и замена 3 и более одинаковых чисел в строках и столбцах
 function checkAndReplaceMatches(matrix) {
     const rows = matrix.length;
     const cols = matrix[0].length;
@@ -76,40 +94,31 @@ function checkAndReplaceMatches(matrix) {
             }
         }
     }
-
-    // Обновляем отображение матрицы
     displayMatrix(matrix);
 }
 
 // Обработчик клика по ячейке
 let selectedCell = null;
 function onCellClick(event) {
-    const clickedCell = event.target;
+    const clickedCell = event.target.closest('td');
     const row = parseInt(clickedCell.dataset.row, 10);
     const col = parseInt(clickedCell.dataset.col, 10);
 
     if (!selectedCell) {
-        // Если ничего не выбрано, выбираем текущую ячейку
         selectedCell = clickedCell;
         selectedCell.style.backgroundColor = '#ddd'; // Выделяем ячейку
     } else {
         const selectedRow = parseInt(selectedCell.dataset.row, 10);
         const selectedCol = parseInt(selectedCell.dataset.col, 10);
 
-        // Проверяем, что ячейки соседние
         if (areAdjacent(selectedRow, selectedCol, row, col)) {
-            // Меняем значения местами
             const temp = matrix9x9[selectedRow][selectedCol];
             matrix9x9[selectedRow][selectedCol] = matrix9x9[row][col];
             matrix9x9[row][col] = temp;
-
-            // Проверяем и заменяем совпадения
             checkAndReplaceMatches(matrix9x9);
         } else {
             alert("Вы можете менять местами только соседние ячейки.");
         }
-
-        // Убираем выделение
         selectedCell.style.backgroundColor = '';
         selectedCell = null;
     }
