@@ -1,366 +1,408 @@
-let score = 0;
-let gifUrl = 'meme.gif'; // Замените на URL вашего GIF файла
-let matrix9x9 = createMatrix(9, 9); // Инициализация матрицы
-
-// Функция обновления счёта
-function updateScore(points) {
-    score += points;
-    document.getElementById('score').textContent = `Очки: ${score}`;
-}
-
-// Функция создания матрицы
-function createMatrix(rows, cols) {
-    const matrix = [];
-    for (let i = 0; i < rows; i++) {
-        const row = [];
-        for (let j = 0; j < cols; j++) {
-            const randomNumber = Math.floor(Math.random() * 5) + 1;
-            row.push(randomNumber);
+document.addEventListener('DOMContentLoaded', () => {
+    const boardElement = document.querySelector('.board');
+    const scoreElement = document.getElementById('score');
+    const themeButton = document.getElementById('theme-button');
+    const soundButton = document.getElementById('sound-button');
+    const gameOverContainer = document.querySelector('.game-over-container');
+    const finalScoreElement = document.getElementById('final-score');
+    const restartButton = document.getElementById('restart-button');
+  
+    const gridSize = 8; // Размер поля (8x8)
+    let grid = [];
+    let selectedCell = null;
+    let score = 0;
+    let soundEnabled = true;
+  
+    let currentTheme = 'light'; // Текущая тема (light или dark)
+  
+    // Функция для инициализации игрового поля
+    function initializeGrid() {
+      grid = [];
+      for (let row = 0; row < gridSize; row++) {
+        grid[row] = [];
+        for (let col = 0; col < gridSize; col++) {
+          grid[row][col] = {
+            value: Math.floor(Math.random() * 5) + 1, // Значения от 1 до 5
+            selected: false,
+          };
         }
-        matrix.push(row);
+      }
+      renderBoard();
     }
-    return matrix;
-}
-
-// Функция отображения матрицы
-function displayMatrix(matrix) {
-    const table = document.getElementById('matrixTable');
-    table.innerHTML = ''; // Очищаем таблицу
-    matrix.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        row.forEach((cell, colIndex) => {
-            const td = document.createElement('td');
-            td.dataset.row = rowIndex;
-            td.dataset.col = colIndex;
-            if (cell !== 0) {
-                const circle = document.createElement('div');
-                circle.classList.add('circle');
-                circle.style.backgroundColor = getColor(cell);
-                td.appendChild(circle);
-            }
-            td.addEventListener('click', onCellClick); // Добавляем обработчик клика
-            tr.appendChild(td);
-        });
-        table.appendChild(tr);
-    });
-}
-
-// Функция получения цвета
-function getColor(number) {
-    const colors = {
-        1: '#FFFF00',   /* Ярко-красный */
-        2: '#0000FF',   /* Ярко-зеленый */
-        3: '#FF0000',   /* Ярко-синий */
-        4: '#008000',    /* Ярко-фиолетовый */
-        5: '#0072f5',  /* Ярко-оранжевый */
-        0: 'white'
-    };
-    return colors[number];
-}
-
-// Проверка на соседство ячеек
-function areAdjacent(row1, col1, row2, col2) {
-    return (
-        (Math.abs(row1 - row2) === 1 && col1 === col2) ||
-        (Math.abs(col1 - col2) === 1 && row1 === row2)
-    );
-}
-
-// Функция опускания шаров и добавления новых
-function updateBoard(matrix) {
-    let hasChanges;
-    do {
-        hasChanges = false;
-        const rows = matrix.length;
-        const cols = matrix[0].length;
-
-        // Опускаем шары вниз
-        for (let j = 0; j < cols; j++) {
-            for (let i = rows - 1; i > 0; i--) {
-                if (matrix[i][j] === 0) {
-                    for (let k = i - 1; k >= 0; k--) {
-                        if (matrix[k][j] !== 0) {
-                            matrix[i][j] = matrix[k][j];
-                            matrix[k][j] = 0;
-                            hasChanges = true;
-                            break;
-                        }
-                    }
-                }
-            }
+  
+    // Функция для отрисовки игрового поля в DOM
+    function renderBoard() {
+      boardElement.innerHTML = ''; // Очищаем поле
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+  
+          // Добавляем класс для шара
+          cell.classList.add(`ball-${grid[row][col].value}`);
+  
+          if (grid[row][col].selected) {
+            cell.classList.add('selected');
+          }
+  
+          if (currentTheme === 'dark') {
+            cell.classList.add('dark-theme');
+          }
+  
+          cell.addEventListener('click', handleCellClick);
+          boardElement.appendChild(cell);
         }
-
-        // Добавляем новые шары сверху
-        for (let j = 0; j < cols; j++) {
-            if (matrix[0][j] === 0) {
-                matrix[0][j] = Math.floor(Math.random() * 5) + 1;
-                hasChanges = true;
-            }
-        }
-    } while (hasChanges);
-    displayMatrix(matrix);
-}
-
-// Функция для замены ячеек на GIF
-// Функция для замены ячеек на GIF
-async function replaceWithGif(matrix, row, col) {
-    return new Promise((resolve) => {
-        const table = document.getElementById('matrixTable');
-        const td = table.querySelector(`td[data-row="${row}"][data-col="${col}"]`); // Находим ячейку
-
-        if (!td) {
-            console.warn(`Cell at row ${row}, col ${col} not found.`);
-            resolve();
-            return;
-        }
-
-        const originalContent = td.innerHTML; // Сохраняем исходное содержимое ячейки
-
-        // Создаем элемент img для GIF
-        const gifImg = document.createElement('img');
-        gifImg.src = gifUrl;
-        gifImg.classList.add('gif-animation');
-        td.innerHTML = ''; // Очищаем ячейку
-        td.appendChild(gifImg);  // Добавляем GIF в ячейку
-
-        // Ждем один кадр, чтобы браузер отобразил GIF
-        requestAnimationFrame(() => {
-            resolve({ td, originalContent, gifImg });
-        });
-    });
-}
-
-// Функция для восстановления ячейки
-async function restoreCell(cellData) {
-    return new Promise((resolve) => {
-        if (cellData && cellData.td && cellData.gifImg) {
-            // Добавляем класс fade-out к GIF
-            cellData.gifImg.classList.add('fade-out');
-
-            // Ждем окончания анимации исчезновения
-            setTimeout(() => {
-                cellData.td.innerHTML = cellData.originalContent;
-                resolve();
-            }, 300); // Время должно совпадать с transition в CSS (0.3s = 300ms)
-        } else {
-            resolve();
-        }
-    });
-}
-
-// Модифицированная функция checkAndReplaceMatches
-async function checkAndReplaceMatches(matrix) {
-    const rows = matrix.length;
-    const cols = matrix[0].length;
-    let removedBalls = 0;
-    let matchesFound = false;
-    const cellsToRestore = []; // Массив данных для восстановления ячеек
-
-    // Проверка строк
-    for (let i = 0; i < rows; i++) {
-        let count = 1;
-        for (let j = 1; j < cols; j++) {
-            if (matrix[i][j] === matrix[i][j - 1] && matrix[i][j] !== 0) {
-                count++;
-                if (count >= 3 && (j === cols - 1 || matrix[i][j] !== matrix[i][j + 1])) {
-                    matchesFound = true;
-                    for (let k = 0; k < count; k++) {
-                        const currentRow = i;
-                        const currentCol = j - k;
-
-                        // Заменяем ячейку на GIF и сохраняем данные для восстановления
-                        const cellData = await replaceWithGif(matrix, currentRow, currentCol);
-                        if(cellData) {
-                           cellsToRestore.push(cellData);
-                        }
-
-                        if (matrix[currentRow][currentCol] !== 0) removedBalls++;
-                        matrix[currentRow][currentCol] = 0;
-                    }
-                    count = 1;
-                }
-            } else {
-                count = 1;
-            }
-        }
+      }
     }
-
-    // Проверка столбцов
-    for (let j = 0; j < cols; j++) {
-        let count = 1;
-        for (let i = 1; i < rows; i++) {
-            if (matrix[i][j] === matrix[i - 1][j] && matrix[i][j] !== 0) {
-                count++;
-                if (count >= 3 && (i === rows - 1 || matrix[i][j] !== matrix[i + 1][j])) {
-                    matchesFound = true;
-                    for (let k = 0; k < count; k++) {
-                        const currentRow = i - k;
-                        const currentCol = j;
-
-                        // Заменяем ячейку на GIF и сохраняем данные для восстановления
-                        const cellData = await replaceWithGif(matrix, currentRow, currentCol);
-                         if(cellData) {
-                           cellsToRestore.push(cellData);
-                        }
-
-                        if (matrix[currentRow][currentCol] !== 0) removedBalls++;
-                        matrix[currentRow][currentCol] = 0;
-                    }
-                    count = 1;
-                }
-            } else {
-                count = 1;
-            }
-        }
-    }
-
-    updateScore(removedBalls * 100);
-    updateBoard(matrix);
-
-    // Ждем 700мс (1000ms - 300ms анимации), затем восстанавливаем ячейки
-    await new Promise(resolve => setTimeout(resolve, 700));
-
-    for (const cellData of cellsToRestore) {
-        await restoreCell(cellData);
-    }
-
-    updateBoard(matrix);
-
-    if (matchesFound) {
-        checkAndReplaceMatches(matrix);
-    }
-}
-
-// Обработчик клика по ячейке
-let selectedCell = null;
-
-function animateCells(cell1, cell2, direction) {
-    const row1 = parseInt(cell1.dataset.row, 10);
-    const col1 = parseInt(cell1.dataset.col, 10);
-    const row2 = parseInt(cell2.dataset.row, 10);
-    const col2 = parseInt(cell2.dataset.col, 10);
-
-    const circle1 = cell1.querySelector('.circle');
-    const circle2 = cell2.querySelector('.circle');
-
-    // Добавляем классы для анимации сжатия
-    circle1.classList.add('shrink');
-    circle2.classList.add('shrink');
-
-    // Ждем окончания анимации сжатия и начинаем перемещение
-    setTimeout(() => {
-        // Получаем цвет шаров
-        const color1 = circle1.style.backgroundColor;
-        const color2 = circle2.style.backgroundColor;
-
-        // Обновляем цвета шаров *перед* перемещением
-        circle1.style.backgroundColor = color2;
-        circle2.style.backgroundColor = color1;
-
-        // Обмен значениями в матрице
-        const temp = matrix9x9[row1][col1];
-        matrix9x9[row1][col1] = matrix9x9[row2][col2];
-        matrix9x9[row2][col2] = temp;
-
-        // Добавляем классы для перемещения и расширения
-        cell1.classList.add(`move-${direction}`);
-        cell2.classList.add(`move-${direction}`);
-        circle1.classList.remove('shrink');
-        circle2.classList.remove('shrink');
-        circle1.classList.add('expand');
-        circle2.classList.add('expand');
-
-        // Ждем окончания анимации перемещения и расширения и удаляем классы
-        setTimeout(() => {
-            cell1.classList.remove(`move-${direction}`);
-            cell2.classList.remove(`move-${direction}`);
-            circle1.classList.remove('expand');
-            circle2.classList.remove('expand');
-
-            // Используем requestAnimationFrame для более плавной анимации и сброса стилей
-            requestAnimationFrame(() => {
-                circle1.style.transform = 'translate(-50%, -50%)';
-                circle2.style.transform = 'translate(-50%, -50%)';
-                // Проверяем наличие совпадений
-                checkAndReplaceMatches(matrix9x9);
-            });
-        }, 300); // Длительность анимации перемещения и расширения
-    }, 150); // Длительность анимации сжатия
-}
-
-function onCellClick(event) {
-    console.log("Клик зарегистрирован."); // Отладочное сообщение
-
-    const clickedCell = event.target.closest('td');
-    console.log("Кликнутая ячейка:", clickedCell); // Отладочное сообщение
-
-    if (!clickedCell) {
-        console.warn("Клик был вне ячейки.");
-        return;
-    }
-
-    const row = parseInt(clickedCell.dataset.row, 10);
-    const col = parseInt(clickedCell.dataset.col, 10);
-    console.log("Координаты ячейки:", row, col); // Отладочное сообщение
-
-    if (!selectedCell) {
-        console.log("Выбрана новая ячейка:", clickedCell); // Отладочное сообщение
-        selectedCell = clickedCell;
-        selectedCell.classList.add('selected');
-    } else {
-        console.log("Уже выбрана ячейка:", selectedCell); // Отладочное сообщение
-        const selectedRow = parseInt(selectedCell.dataset.row, 10);
-        const selectedCol = parseInt(selectedCell.dataset.col, 10);
-
-        if (areAdjacent(selectedRow, selectedCol, row, col)) {
-            console.log("Ячейки соседние, начинаем анимацию."); // Отладочное сообщение
-            let direction;
-            if (row < selectedRow) {
-                direction = 'down';
-            } else if (row > selectedRow) {
-                direction = 'up';
-            } else if (col < selectedCol) {
-                direction = 'right';
-            } else {
-                direction = 'left';
-            }
-
-            animateCells(clickedCell, selectedCell, direction);
-
-        } else {
-            console.log("Ячейки не соседние."); // Отладочное сообщение
-            alert("Вы можете менять местами только соседние ячейки.");
-            if (selectedCell) {
-                selectedCell.classList.remove('selected');
-            }
-            selectedCell = null;
-        }
-
-        if (selectedCell) {
-            selectedCell.classList.remove('selected');
-        }
+  
+    // Функция для обработки клика по ячейке
+    function handleCellClick(event) {
+      const row = parseInt(event.target.dataset.row);
+      const col = parseInt(event.target.dataset.col);
+  
+      if (selectedCell === null) {
+        // Первый клик
+        selectedCell = { row, col };
+        grid[row][col].selected = true;
+        playSound('ball-select-sound'); // Воспроизводим звук выбора шара
+      } else {
+        // Второй клик
+        const firstCell = selectedCell;
         selectedCell = null;
+  
+        // Проверка на соседство
+        const isAdjacent =
+          (Math.abs(row - firstCell.row) === 1 && col === firstCell.col) ||
+          (Math.abs(col - firstCell.col) === 1 && row === firstCell.row);
+  
+        if (isAdjacent) {
+          // Меняем шарики местами
+          swapCells(firstCell, { row, col });
+        } else {
+          // Клик на отдаленную ячейку - просто выбираем ее
+          grid[firstCell.row][firstCell.col].selected = false;
+          grid[row][col].selected = true;
+          selectedCell = { row, col };
+          playSound('ball-select-sound'); // Воспроизводим звук выбора шара
+        }
+      }
+  
+      renderBoard();
     }
-}
-
-// Инициализация матрицы и отображение
-document.body.insertAdjacentHTML('beforeend', '<h2 id="score">Очки: 0</h2>');
-displayMatrix(matrix9x9);
-checkAndReplaceMatches(matrix9x9);
-
-// Переключатель темы
-const themeToggle = document.getElementById('themeToggle');
-const savedTheme = localStorage.getItem('theme') || 'light';
-
-if (savedTheme === 'dark') {
-    document.body.classList.add('dark-theme')
-    themeToggle.textContent = 'Светлая тема'
-}
-
-// Переключатель темы
-themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-theme');
-    const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
-    localStorage.setItem('theme', currentTheme)
-    themeToggle.textContent = currentTheme === 'dark' ? 'Светлая тема' : 'Тёмная тема'
-});
+  
+    // Функция для обмена двух ячеек местами
+    function swapCells(cell1, cell2) {
+      const tempValue = grid[cell1.row][cell1.col].value;
+      grid[cell1.row][cell1.col].value = grid[cell2.row][cell2.col].value;
+      grid[cell2.row][cell2.col].value = tempValue;
+  
+      grid[cell1.row][cell1.col].selected = false;
+      grid[cell2.row][cell2.col].selected = false;
+  
+      playSound('ball-swap-sound'); // Воспроизводим звук перетаскивания шаров
+      renderBoard(); // Обновляем доску после обмена (важно для анимации)
+      checkForMatches();
+    }
+  
+    // Функция для проверки на совпадения
+    function checkForMatches() {
+      let matches = [];
+  
+      // Горизонтальные совпадения
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize - 2; col++) {
+          if (
+            grid[row][col].value &&
+            grid[row][col].value === grid[row][col + 1].value &&
+            grid[row][col].value === grid[row][col + 2].value
+          ) {
+            let matchLength = 3;
+            while (
+              col + matchLength < gridSize &&
+              grid[row][col].value === grid[row][col + matchLength].value
+            ) {
+              matchLength++;
+            }
+            for (let i = 0; i < matchLength; i++) {
+              matches.push({ row, col: col + i });
+            }
+            col += matchLength - 1;
+          }
+        }
+      }
+  
+      // Вертикальные совпадения
+      for (let col = 0; col < gridSize; col++) {
+        for (let row = 0; row < gridSize - 2; row++) {
+          if (
+            grid[row][col].value &&
+            grid[row][col].value === grid[row + 1][col].value &&
+            grid[row][col].value === grid[row + 2][col].value
+          ) {
+            let matchLength = 3;
+            while (
+              row + matchLength < gridSize &&
+              grid[row][col].value === grid[row + matchLength][col].value
+            ) {
+              matchLength++;
+            }
+            for (let i = 0; i < matchLength; i++) {
+              matches.push({ row: row + i, col });
+            }
+            row += matchLength - 1;
+          }
+        }
+      }
+  
+      if (matches.length > 0) {
+        removeMatches(matches);
+      } else {
+        if (!hasPossibleMoves()) {
+          endGame();
+        }
+      }
+    }
+  
+    // Функция для очистки класса шара
+    function clearBallClass(cellElement) {
+      for (let i = 1; i <= 5; i++) {
+        cellElement.classList.remove(`ball-${i}`);
+      }
+    }
+  
+    // Функция для удаления совпадений
+    async function removeMatches(matches) {
+      let removedCount = matches.length;
+      matches.forEach(match => {
+        const cellElement = document.querySelector(`.board .cell[data-row="${match.row}"][data-col="${match.col}"]`);
+  
+        // Добавляем класс "to-remove" перед удалением класса шара
+        cellElement.classList.add('to-remove');
+  
+        // Удаляем класс шара
+        clearBallClass(cellElement);
+  
+        // Обнуляем значение в сетке
+        grid[match.row][match.col].value = null;
+      });
+  
+      renderBoard();
+  
+      playSound('ball-remove-sound'); // Воспроизводим звук исчезновения шаров
+      await new Promise(resolve => setTimeout(resolve, 300)); // Ждем окончания анимации
+  
+      let newScore = calculateScore(removedCount);
+      updateScore(score + newScore);
+  
+      applyGravity();
+    }
+  
+    // Функция для применения "гравитации" (сдвига шариков вниз)
+    function applyGravity() {
+      for (let col = 0; col < gridSize; col++) {
+        let emptyRow = gridSize - 1;
+        for (let row = gridSize - 1; row >= 0; row--) {
+          if (grid[row][col].value !== null) {
+            // Если ячейка не пустая, перемещаем ее вниз
+            grid[emptyRow][col].value = grid[row][col].value;
+            if (row !== emptyRow) {
+              grid[row][col].value = null; // Опустошаем старую ячейку
+            }
+            emptyRow--;
+          }
+        }
+  
+        // Заполняем верхние ячейки новыми случайными значениями
+        for (let row = 0; row <= emptyRow; row++) {
+          grid[row][col].value = Math.floor(Math.random() * 5) + 1;
+        }
+      }
+  
+      // Обновляем классы шаров в DOM после перемещения
+      const cellElements = document.querySelectorAll('.board .cell');
+      cellElements.forEach(cellElement => {
+        const row = parseInt(cellElement.dataset.row);
+        const col = parseInt(cellElement.dataset.col);
+        clearBallClass(cellElement);  // Сначала удаляем старый класс
+        cellElement.classList.add(`ball-${grid[row][col].value}`); // Добавляем новый класс
+      });
+  
+      checkForMatches(); // Проверяем, образовались ли новые совпадения
+    }
+  
+    // Функция для подсчета очков
+    function calculateScore(removedCount) {
+      let scorePerBall = 10;
+      if (removedCount === 4) scorePerBall = 20;
+      if (removedCount === 5) scorePerBall = 30;
+      if (removedCount > 5) scorePerBall = 10 + (removedCount - 3) * 10;
+  
+      return removedCount * scorePerBall;
+    }
+  
+    // Функция для проверки, есть ли доступные ходы
+    function hasPossibleMoves() {
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          // Проверяем возможность хода вправо
+          if (col < gridSize - 1 && grid[row][col].value) {
+            // Меняем местами текущую ячейку и правую
+            let temp = grid[row][col].value;
+            grid[row][col].value = grid[row][col + 1].value;
+            grid[row][col + 1].value = temp;
+  
+            // Проверяем, образовалась ли комбинация
+            if (checkMoveResultedInMatch(row, col) || checkMoveResultedInMatch(row, col + 1)) {
+              // Возвращаем ячейки в исходное состояние
+              temp = grid[row][col].value;
+              grid[row][col].value = grid[row][col + 1].value;
+              grid[row][col + 1].value = temp;
+              return true; // Ход возможен
+            }
+  
+            // Возвращаем ячейки в исходное состояние
+            temp = grid[row][col].value;
+            grid[row][col].value = grid[row][col + 1].value;
+            grid[row][col + 1].value = temp;
+          }
+  
+          // Проверяем возможность хода вниз
+          if (row < gridSize - 1 && grid[row][col].value) {
+            // Меняем местами текущую ячейку и нижнюю
+            let temp = grid[row][col].value;
+            grid[row][col].value = grid[row + 1][col].value;
+            grid[row + 1][col].value = temp;
+  
+            // Проверяем, образовалась ли комбинация
+            if (checkMoveResultedInMatch(row, col) || checkMoveResultedInMatch(row + 1, col)) {
+              // Возвращаем ячейки в исходное состояние
+              temp = grid[row][col].value;
+              grid[row][col].value = grid[row + 1][col].value;
+              grid[row + 1][col].value = temp;
+              return true; // Ход возможен
+            }
+  
+            // Возвращаем ячейки в исходное состояние
+            temp = grid[row][col].value;
+            grid[row][col].value = grid[row + 1][col].value;
+            grid[row + 1][col].value = temp;
+          }
+        }
+      }
+  
+      return false; // Ходов нет
+    }
+  
+    // Вспомогательная функция для проверки, образовалась ли комбинация после хода
+    function checkMoveResultedInMatch(row, col) {
+      // Проверяем горизонталь
+      let count = 1;
+      let startCol = col;
+      while (startCol > 0 && grid[row][startCol].value === grid[row][startCol - 1].value) {
+        count++;
+        startCol--;
+      }
+      let endCol = col;
+      while (endCol < gridSize - 1 && grid[row][endCol].value === grid[row][endCol + 1].value) {
+        count++;
+        endCol++;
+      }
+      if (count >= 3) return true;
+  
+      // Проверяем вертикаль
+      count = 1;
+      let startRow = row;
+      while (startRow > 0 && grid[startRow][col].value === grid[startRow - 1][col].value) {
+        count++;
+        startRow--;
+      }
+      let endRow = row;
+      while (endRow < gridSize - 1 && grid[endRow][col].value === grid[endRow + 1][col].value) {
+        count++;
+        endRow++;
+      }
+      if (count >= 3) return true;
+  
+      return false;
+    }
+  
+    // Функция для завершения игры
+    function endGame() {
+      finalScoreElement.textContent = score;
+      gameOverContainer.style.display = 'flex';
+    }
+  
+    // Функция для обновления счета
+    function updateScore(newScore) {
+      score = newScore;
+      scoreElement.textContent = score;
+    }
+  
+    // Функция для переключения темы
+    function toggleTheme() {
+      const body = document.body;
+      const container = document.querySelector('.container');
+      const cells = document.querySelectorAll('.cell');
+      const buttons = document.querySelectorAll('button');
+  
+      if (currentTheme === 'light') {
+        body.classList.add('dark-theme');
+        container.classList.add('dark-theme');
+        cells.forEach(cell => cell.classList.add('dark-theme'));
+        buttons.forEach(button => button.classList.add('dark-theme'));
+        currentTheme = 'dark';
+      } else {
+        body.classList.remove('dark-theme');
+        container.classList.remove('dark-theme');
+        cells.forEach(cell => cell.classList.remove('dark-theme'));
+        buttons.forEach(button => button.classList.remove('dark-theme'));
+        currentTheme = 'light';
+      }
+  
+      // Сохраняем тему в localStorage
+      localStorage.setItem('theme', currentTheme);
+    }
+  
+    // Обработчик кнопки смены темы
+    themeButton.addEventListener('click', () => {
+      playSound('button-click-sound'); // Воспроизводим звук клика
+      toggleTheme();
+    });
+  
+    // Обработчик кнопки включения/выключения звука
+    soundButton.addEventListener('click', () => {
+      playSound('button-click-sound'); // Воспроизводим звук клика
+      soundEnabled = !soundEnabled;
+      soundButton.textContent = `Звук: ${soundEnabled ? 'Вкл' : 'Выкл'}`;
+      localStorage.setItem('soundEnabled', soundEnabled); // Сохраняем состояние звука в localStorage
+    });
+  
+    // Обработчик кнопки "Играть снова"
+    restartButton.addEventListener('click', () => {
+      playSound('button-click-sound'); // Воспроизводим звук клика
+      gameOverContainer.style.display = 'none';
+      initializeGrid();
+      updateScore(0);
+    });
+  
+    // Функция для воспроизведения звука
+    function playSound(soundId) {
+      if (soundEnabled) {
+        const sound = document.getElementById(soundId);
+        sound.currentTime = 0; // Перематываем звук в начало
+        sound.play();
+      }
+    }
+  
+    // При загрузке страницы проверяем, есть ли сохраненное состояние звука в localStorage
+    const savedSoundEnabled = localStorage.getItem('soundEnabled');
+    if (savedSoundEnabled !== null) {
+      soundEnabled = savedSoundEnabled === 'true';
+      soundButton.textContent = `Звук: ${soundEnabled ? 'Вкл' : 'Выкл'}`;
+    }
+  
+    // Инициализация игры
+    initializeGrid();
+  });

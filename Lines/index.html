@@ -1,22 +1,38 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Перестановка элементов в матрице</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3 в ряд</title>
+  <link rel="stylesheet" href="style.css">
+  <audio id="button-click-sound" src="./sounds/button-click.mp3" preload="auto"></audio>
+  <audio id="ball-select-sound" src="./sounds/ball-select.mp3" preload="auto"></audio>
+  <audio id="ball-swap-sound" src="./sounds/ball-swap.mp3" preload="auto"></audio>
+  <audio id="ball-remove-sound" src="./sounds/ball-remove.mp3" preload="auto"></audio>
 </head>
 <body>
-    <h1></h1>
-   
-    <button id="themeToggle">Тёмная тема</button>
 
-    <h2></h2>
-    <table id="matrixTable"></table>
+  <div class="container">
+    <div class="score-container">
+      Счет: <span id="score">0</span>
+    </div>
 
-    <!-- Подключаем внешний JavaScript файл -->
-    <script src="script.js"></script>
+    <div class="board">
+      <!-- Игровое поле будет сгенерировано JavaScript -->
+    </div>
 
-    
+    <div class="controls">
+      <button id="theme-button">Сменить тему</button>
+      <button id="sound-button">Звук: Вкл</button>
+    </div>
+
+    <div class="game-over-container" style="display: none;">
+      <h2>Игра окончена!</h2>
+      <p>Ваш счет: <span id="final-score">0</span></p>
+      <button id="restart-button">Играть снова</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
