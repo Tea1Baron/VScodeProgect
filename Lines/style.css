@@ -1,13 +1,68 @@
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-theme {
+    background-color: #333;
+    color: #f0f0f0;
+}
+
+h1, h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 table {
     border-collapse: collapse;
     margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+body.dark-theme table {
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 
 td {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     text-align: center;
-    border: 1px solid #000;
+    border: 1px solid #e0e0e0;
+    background-color: #fff;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border 0.3s ease, transform 0.2s ease;
+    border-radius: 5px;
+}
+
+body.dark-theme td {
+    background-color: #444;
+    border: 1px solid #555;
+}
+
+td:hover {
+    background-color: #f5f5f5;
+}
+
+body.dark-theme td:hover {
+    background-color: #555;
+}
+
+td.selected {
+    background-color: #ddd;
+    transform: scale(1.05);
+}
+
+body.dark-theme td.selected {
+    background-color: #555;
+    transform: scale(1.05);
 }
 
 input {
@@ -15,17 +70,114 @@ input {
     margin: 5px;
 }
 
-td {
-    width: 50px;
-    height: 50px;
-    text-align: center;
-    border: 1px solid #000;
-    position: relative;
-}
-
 .circle {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     margin: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+    background-image: radial-gradient(circle at 50% 20%, #ffffff, transparent 60%);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body.dark-theme .circle {
+    box-shadow: 0 3px 5px rgba(255, 255, 255, 0.3);
+}
+
+/* Анимация сжатия */
+.circle.shrink {
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0.5;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Анимация расширения */
+.circle.expand {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Анимация "прыжка" */
+.circle.jump {
+    animation: jump 0.3s ease;
+}
+
+@keyframes jump {
+    0% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    50% {
+        transform: translate(-50%, -70%) translateY(-10px);
+    }
+    100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+}
+
+h2 {
+    font-size: 20px;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+body.dark-theme h2 {
+    color: #f0f0f0;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-theme button {
+    background-color: #444;
+    color: #f0f0f0;
+    border: 1px solid #555;
+}
+
+button:hover {
+    background-color: #eee;
+}
+
+body.dark-theme button:hover {
+    background-color: #555;
+}
+
+/* Стили для GIF */
+.gif-animation {
+    width: 45px;
+    height: 45px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Анимация исчезновения */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
